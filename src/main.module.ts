@@ -57,7 +57,7 @@ type Environment = 'development' | 'production';
         database: configService.get('DB_NAME'),
         entities: [UserEntity, NotificationEntity, SessionEntity],
         autoLoadEntities: true,
-        synchronize: true, // isDevelopment(),
+        synchronize: isDevelopment(),
         ssl: false,
         logger: 'advanced-console',
         logging: false,
