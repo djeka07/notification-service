@@ -80,3 +80,7 @@ type Environment = 'development' | 'production';
   providers: [LokiRequestLoggerInterceptorProvider],
 })
 export class MainModule {}
+function isDevelopment(): boolean {
+  throw new Error('Function not implemented.');
+}
+
