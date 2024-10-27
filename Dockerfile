@@ -2,14 +2,18 @@
 # BUILD FOR LOCAL DEVELOPMENT
 ###################
 
-FROM node:18-alpine As development
+FROM node:22-alpine AS development
 
 WORKDIR /usr/src/app
 
 COPY --chown=node:node package*.json ./
 COPY --chown=node:node yarn.lock ./
+COPY --chown=node:node .yarnrc.yml ./
+COPY --chown=node:node .yarn ./.yarn
 
-RUN yarn install --frozen-lockfile
+RUN corepack enable
+
+RUN yarn install --immutable
 
 COPY --chown=node:node . .
 
@@ -19,21 +23,26 @@ USER node
 # BUILD FOR PRODUCTION
 ###################
 
-FROM node:18-alpine As build
+FROM node:22-alpine AS build
 
 WORKDIR /usr/src/app
 
 COPY --chown=node:node package*.json ./
+COPY --chown=node:node yarn.lock ./
+COPY --chown=node:node .yarnrc.yml ./
+COPY --chown=node:node .yarn ./.yarn
 
 COPY --chown=node:node --from=development /usr/src/app/node_modules ./node_modules
 
 COPY --chown=node:node . .
 
-RUN npm run build
+ENV NODE_ENV=production
 
-ENV NODE_ENV production
+RUN corepack enable
 
-RUN yarn install --frozen-lockfile  --production && yarn cache clean --force
+RUN yarn build
+
+RUN yarn workspaces focus && yarn cache clean --all
 
 USER node
 
@@ -41,11 +50,11 @@ USER node
 # PRODUCTION
 ###################
 
-FROM node:18-alpine As production
+FROM node:22-alpine AS production
 
 COPY --chown=node:node --from=build /usr/src/app/node_modules ./node_modules
 COPY --chown=node:node --from=build /usr/src/app/dist ./dist
 
-ENV NODE_ENV production
+ENV NODE_ENV=production
 
 CMD [ "node", "dist/main.js" ]
